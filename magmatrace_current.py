@@ -1533,9 +1533,9 @@ def mineral_formula_calc(df, n_oxygens, mineral, normalized):
         if m != None:
             cations[i] = m.group(1)
 
-    norm_cations = pd.DataFrame(norm_cations, columns=cations)
+    norm_cations = pd.DataFrame(norm_cations,columns = cations)
+    norm_cations['Total_cations'] = norm_cations.sum(axis = 'columns')
     norm_cations[data.index.name] = data.index.tolist()
-    norm_cations["Total_cations"] = norm_cations.sum(axis="columns")
 
     if mineral == "pyroxene":
         # ideal cations
