@@ -8,9 +8,12 @@ This will usually be in the form of Jupyter notebooks, but occasionally more in 
 - general mineral formula recalculation
 - isotope mixing equations from DePaolo (1981) and Aitcheson and Forrest (1994)
 - zircon saturation equations from Boehnke et al., (2013) and Watson and Harrison (1983)
-- 
 
-Please feel free to take these scripts and make them your own or suggest things you want to see us code up
+We do not claim to be the sole authors of any of these methodologies and have tried to give credit where credit is due in the function docstrings. Users are first referred to the publication where these fantastic equations originally came from and also the compilations: 
+- *Using Geochemical Data* - Rollinson, 1993
+- *Quantitative Geochemistry* - Zou, 2007
+- *Geochemistry* - White, 2013
+ 
 
 Happy number crunching!
 
