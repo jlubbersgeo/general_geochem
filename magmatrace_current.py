@@ -1310,7 +1310,7 @@ def fraclin_xtl(Cl, a, b, F):
 
 
 #%% General mineral recalculation.
-def mineral_formula_calc(df, n_oxygens, mineral, normalized):
+def mineral_formula_calc(df, n_oxygens, mineral, normalized,index):
 
     """
     mineral_formula_calc is a function that calculates the stoichiometry for a mineral based on a set of major
@@ -1338,6 +1338,10 @@ def mineral_formula_calc(df, n_oxygens, mineral, normalized):
     if True, will normalize your geochemical analyses. If false, mineral formulas will be calculated using 
     raw geochemical data
     
+    index: string
+    column denoting which column to be used as the index for the dataframe. Suggested that this is a column that 
+    denotes sample name or spot name or something similar
+    
     
     Returns:
     norm_cations: pandas dataframe object that contains the calculated number of cations in the chemical formula
@@ -1348,6 +1352,7 @@ def mineral_formula_calc(df, n_oxygens, mineral, normalized):
     """
 
     data = df.copy()
+    data.set_index(index,inplace = True)
     data.fillna(0, inplace=True)
     # if index is not None:
 
