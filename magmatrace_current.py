@@ -98,7 +98,300 @@ def isomix(rationum, c1, r1, c2, r2, *data):
             "Check your input. Ensure to specify rattionum and the correct amount of concentrations or ratios"
         )
 
+def ratio_mixing(df, n_components, resolution=0.1):
 
+    """
+    Mixing of ratios as described by Albarede 1995
+    Introduction to Geochemical Modeling equation 1.3.1
+    
+    Inputs:
+    
+    df | pandas DataFrame
+    
+    DataFrame of inputs. should be formatted as follows:
+    
+    For 2 component mixing:
+    
+    Index|Element1_c|Element1_r|Element2_c|Element2_r
+    -------------------------------------------------
+      A  |          |          |          |
+    -------------------------------------------------  
+      B  |          |          |          |
+    
+      
+    
+    For 3 component mixing:
+    
+    Index|Element1_c|Element1_r|Element2_c|Element2_r
+    -------------------------------------------------
+      A  |          |          |          |
+    -------------------------------------------------  
+      B  |          |          |          |
+    -------------------------------------------------
+      C  |          |          |          |
+      
+      
+    Where the name of each component is the index of the dataframe and the 
+    concentration and ratio columns for each elemental species contain "_c" and "_r" 
+    somewhere in the column header, respectively. 
+    
+    n_components | int
+    
+    Number of end-member components (either 2 or 3)
+    
+    resolution | float
+    
+    The resolution you want to run your mixing model at. This is a number between 0.01 
+    and 0.5. This is how far apart to space points in the eventual mixing mesh
+    (e.g. .1 will return a mixing mesh spaced by 1O% increments for each component)
+    
+    Default is 0.1
+    
+    
+    
+    
+    Returns:
+    
+    results | pandas DataFrame
+    
+    The results of the mixing model that is n x 7 in shape:
+    
+    f_A|f_B|f_C|Element1_c_mix|Element2_c_mix|Element1_r_mix|Element2_r_mix
+    -----------------------------------------------------------------------
+    
+    Where f columns are fraction of each component in the mixture and other columns
+    Are for the concentrations and ratios of the mixture for each respective combination
+    of f values
+    
+    
+    """
+
+    if n_components == 2:
+
+        if resolution < 0.01:
+            print(
+                "Please pick a lower resolution (e.g., bigger number).\nYou don't need it and it your computer may explode"
+            )
+
+        if resolution > 0.5:
+            print("Please pick a higher resolution (e.g., number < 0.5). \n")
+
+        else:
+
+            # generate an array for fraction of each component
+            f = np.arange(0, 1 + resolution, resolution)
+
+            # all possible combinations for three f arrays
+            a = np.array(np.meshgrid(f, f)).T.reshape(-1, 2)
+
+            # where the combinations sum to 1
+            f_vals = a[a.sum(axis=1) == 1]
+
+            # get names of components
+            components = df.index.tolist()
+
+            # get names of columns where concentrations and ratios are held
+            # IMPORTANT TO HAVE DATAFRAME IN THIS FORMAT
+            elements = [col for col in df.columns if "_c" in col]
+            ratios = [col for col in df.columns if "_r" in col]
+
+            # Concentration of mixture
+
+            if len(elements) == 1:
+
+                el1_mix_concentrations = (
+                    df.loc[components[0], elements[0]] * f_vals[:, 0]
+                    + df.loc[components[1], elements[0]] * f_vals[:, 1]
+                )
+
+                # ratio values of the mixture using Albarede 1995 eq. 1.3.1
+                el1_mix_ratios = df.loc[components[0], ratios[0]] * (
+                    (f_vals[:, 0] * df.loc[components[0], elements[0]])
+                    / el1_mix_concentrations
+                ) + df.loc[components[1], ratios[0]] * (
+                    (f_vals[:, 1] * df.loc[components[1], elements[0]])
+                    / el1_mix_concentrations
+                )
+
+                results = pd.DataFrame(
+                    {
+                        "f_{}".format(components[0]): f_vals[:, 0],
+                        "f_{}".format(components[1]): f_vals[:, 1],
+                        "{}_mix".format(elements[0]): el1_mix_concentrations,
+                        "{}_mix".format(ratios[0]): el1_mix_ratios,
+                    }
+                )
+            else:
+
+                el1_mix_concentrations = (
+                    df.loc[components[0], elements[0]] * f_vals[:, 0]
+                    + df.loc[components[1], elements[0]] * f_vals[:, 1]
+                )
+                el2_mix_concentrations = (
+                    df.loc[components[0], elements[1]] * f_vals[:, 0]
+                    + df.loc[components[1], elements[1]] * f_vals[:, 1]
+                )
+
+                # ratio values of the mixture using Albarede 1995 eq. 1.3.1
+                el1_mix_ratios = df.loc[components[0], ratios[0]] * (
+                    (f_vals[:, 0] * df.loc[components[0], elements[0]])
+                    / el1_mix_concentrations
+                ) + df.loc[components[1], ratios[0]] * (
+                    (f_vals[:, 1] * df.loc[components[1], elements[0]])
+                    / el1_mix_concentrations
+                )
+
+                el2_mix_ratios = df.loc[components[0], ratios[1]] * (
+                    (f_vals[:, 0] * df.loc[components[0], elements[1]])
+                    / el2_mix_concentrations
+                ) + df.loc[components[1], ratios[1]] * (
+                    (f_vals[:, 1] * df.loc[components[1], elements[1]])
+                    / el2_mix_concentrations
+                )
+
+                results = pd.DataFrame(
+                    {
+                        "f_{}".format(components[0]): f_vals[:, 0],
+                        "f_{}".format(components[1]): f_vals[:, 1],
+                        "{}_mix".format(elements[0]): el1_mix_concentrations,
+                        "{}_mix".format(elements[1]): el2_mix_concentrations,
+                        "{}_mix".format(ratios[0]): el1_mix_ratios,
+                        "{}_mix".format(ratios[1]): el2_mix_ratios,
+                    }
+                )
+
+    if n_components == 3:
+
+        if resolution < 0.01:
+            print(
+                "Please pick a lower resolution (e.g., bigger number).\nYou don't need it and it your computer may explode"
+            )
+
+        if resolution > 0.5:
+            print("Please pick a higher resolution (e.g., number < 0.5). \n")
+
+        else:
+
+            # generate an array for fraction of each component
+            f = np.arange(0, 1 + resolution, resolution)
+
+            # all possible combinations for three f arrays
+            a = np.array(np.meshgrid(f, f, f)).T.reshape(-1, 3)
+
+            # where the combinations sum to 1
+            f_vals = a[a.sum(axis=1) == 1]
+
+            # get names of components
+            components = df.index.tolist()
+
+            # get names of columns where concentrations and ratios are held
+            # IMPORTANT TO HAVE DATAFRAME IN THIS FORMAT
+            elements = [col for col in df.columns if "_c" in col]
+            ratios = [col for col in df.columns if "_r" in col]
+
+            if len(elements) == 1:
+                # Concentration of mixture using basic 3 component mixing
+                # of concentrations
+                el1_mix_concentrations = (
+                    df.loc[components[0], elements[0]] * f_vals[:, 0]
+                    + df.loc[components[1], elements[0]] * f_vals[:, 1]
+                    + df.loc[components[2], elements[0]] * f_vals[:, 2]
+                )
+
+                # ratio values of the mixture using Albarede 1995 eq. 1.3.1
+                el1_mix_ratios = (
+                    df.loc[components[0], ratios[0]]
+                    * (
+                        (f_vals[:, 0] * df.loc[components[0], elements[0]])
+                        / el1_mix_concentrations
+                    )
+                    + df.loc[components[1], ratios[0]]
+                    * (
+                        (f_vals[:, 1] * df.loc[components[1], elements[0]])
+                        / el1_mix_concentrations
+                    )
+                    + df.loc[components[2], ratios[0]]
+                    * (
+                        (f_vals[:, 2] * df.loc[components[2], elements[0]])
+                        / el1_mix_concentrations
+                    )
+                )
+
+                results = pd.DataFrame(
+                    {
+                        "f_{}".format(components[0]): f_vals[:, 0],
+                        "f_{}".format(components[1]): f_vals[:, 1],
+                        "f_{}".format(components[2]): f_vals[:, 2],
+                        "{}_mix".format(elements[0]): el1_mix_concentrations,
+                        "{}_mix".format(ratios[0]): el1_mix_ratios,
+                    }
+                )
+
+            else:
+
+                # Concentration of mixture using basic 3 component mixing
+                # of concentrations
+                el1_mix_concentrations = (
+                    df.loc[components[0], elements[0]] * f_vals[:, 0]
+                    + df.loc[components[1], elements[0]] * f_vals[:, 1]
+                    + df.loc[components[2], elements[0]] * f_vals[:, 2]
+                )
+                el2_mix_concentrations = (
+                    df.loc[components[0], elements[1]] * f_vals[:, 0]
+                    + df.loc[components[1], elements[1]] * f_vals[:, 1]
+                    + df.loc[components[2], elements[1]] * f_vals[:, 2]
+                )
+
+                # ratio values of the mixture using Albarede 1995 eq. 1.3.1
+                el1_mix_ratios = (
+                    df.loc[components[0], ratios[0]]
+                    * (
+                        (f_vals[:, 0] * df.loc[components[0], elements[0]])
+                        / el1_mix_concentrations
+                    )
+                    + df.loc[components[1], ratios[0]]
+                    * (
+                        (f_vals[:, 1] * df.loc[components[1], elements[0]])
+                        / el1_mix_concentrations
+                    )
+                    + df.loc[components[2], ratios[0]]
+                    * (
+                        (f_vals[:, 2] * df.loc[components[2], elements[0]])
+                        / el1_mix_concentrations
+                    )
+                )
+
+                el2_mix_ratios = (
+                    df.loc[components[0], ratios[1]]
+                    * (
+                        (f_vals[:, 0] * df.loc[components[0], elements[1]])
+                        / el2_mix_concentrations
+                    )
+                    + df.loc[components[1], ratios[1]]
+                    * (
+                        (f_vals[:, 1] * df.loc[components[1], elements[1]])
+                        / el2_mix_concentrations
+                    )
+                    + df.loc[components[2], ratios[1]]
+                    * (
+                        (f_vals[:, 2] * df.loc[components[2], elements[1]])
+                        / el2_mix_concentrations
+                    )
+                )
+
+                results = pd.DataFrame(
+                    {
+                        "f_{}".format(components[0]): f_vals[:, 0],
+                        "f_{}".format(components[1]): f_vals[:, 1],
+                        "f_{}".format(components[2]): f_vals[:, 2],
+                        "{}_mix".format(elements[0]): el1_mix_concentrations,
+                        "{}_mix".format(elements[1]): el2_mix_concentrations,
+                        "{}_mix".format(ratios[0]): el1_mix_ratios,
+                        "{}_mix".format(ratios[1]): el2_mix_ratios,
+                    }
+                )
+
+    return results
 def isoassim(modeltype, rationum, r, D, cp, ca, ep, ea, *data):
     """
     
