@@ -1599,7 +1599,92 @@ def fraclin_xtl(Cl, a, b, F):
     Cl_new = Cl * np.exp((a - 1) * np.log(F) + b * (F - 1))
     return Cl_new
 
+def norm_ree(df,source):
+    """
+    Function to normalize rare earth element data.
+    C1: Values taken from McDonough and Sun (1995)
+    Primitive Mantle: Values taken from McDonough & Sun (1995)
+    Eroded Earth: Values taken from Palme and O'Neill (2003)
+    MORB: Values taken from White and Klein (2012)
+    ---
+    Inputs: 
+    Dataframe with ree La through Lu. Values must be in ppm
+    Source: Reservoir you wish to normalize your data to. These are listed above.
+    ---
+    Outputs: The input dataframe with normalized values included with a x_N as the column header, where x is the element.
+    
+    """
+    import numpy as np
+    
+    # make arrays of compositions
+    C1 = np.array([[0.237, 0.613, 0.0928, 0.457, 0.148, 0.0563, 0.199, 0.0361, 0.246, 0.0546, 0.160, 0.0247, 0.161, 0.0246]])
+    prim_mntl = np.array([[0.648, 0.68, 0.254, 1.25, 0.406, 0.154, 0.544, 0.099, 0.674, 0.149, 0.438, 0.068, 0.441, 0.068]])
+    eroded_Earth = np.array([[0.555, 1.53, 0.235, 1.16, 0.389, 0.147, 0.523, 0.097, 0.666, 0.149, 0.440, 0.068]])
+    morb = np.array([[4.87, 5.81, 0.94, 4.9, 1.70, 0.62, 2.25, 0.43, 2.84, 0.63, 1.85, 0.28, 1.85, 0.28]])    
+    
+    to_calc = df.loc[0::,'La':'Lu']
+    
+    if source == "C1":
+        ree_norm = to_calc / C1
+    elif source == "Primitive Mantle":
+        ree_norm = to_calc / prim_mntl
+    elif source == "Eroded Earth":
+        ree_norm = to_calc / eroded_Earth
+    elif source == "MORB":
+        ree_norm = to_calc / morb
+    else:
+        print('Check Source Inputs')     
+    
+    df[['la_N','ce_N','pr_N','nd_N','sm_N','eu_N','gd_N','tb_N','dy_N','ho_N','er_N','tm_N','yb_N','lu_N']] = ree_norm
+    
+    return df
 
+def norm_spider(df,source):
+    """
+    Function to normalize rare earth element data.
+    C1: Values taken from McDonough and Sun (1995)
+    Primitive Mantle: Values taken from McDonough & Sun (1995)
+    Eroded Earth: Values taken from Palme and O'Neill (2003)
+    MORB: Values taken from White and Klein (2012)
+    ---
+    Inputs: 
+    Dataframe with trace elements. Values must be in ppm. Elements included are:
+    Cs, Rb, Ba, Th, U, Nb, Ta, K, La, Ce, Pb, Pr, Sr, Nd, Sm, Zr, Hf, Eu, Gd, Tb, Dy, Y, Ho, Er, Tm, Yb, Lu
+    in that order.
+    Source: Reservoir you wish to normalize your data to. These are listed above.
+    ---
+    Outputs: The input dataframe with normalized values included with a x_N as the column header, where x is the element.
+    
+    """
+    import numpy as np
+    
+    # make arrays of compositions
+    C1 = np.array([[0.190, 2.30, 2.410, 0.029, 0.0074, 0.240, 0.0136, 550, 0.237, 0.613, 2.470, 0.0928, 7.25, 0.457, 0.148, 3.82, 0.103, 0.0563, 0.199,
+                   0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246]])
+    prim_mntl = np.array([[0.021, 0.60, 6.60, 0.080, 0.02, 0.66, 0.037, 240, 0.648, 1.68, 0.150, 0.254, 19.90, 1.25, 0.406, 10.50, 0.283, 0.154, 0.544, 0.099,
+                          0.674, 4.30, 0.149, 0.438, 0.068, 0.441, 0.068]])
+    eroded_Earth = np.array([[0.015, 0.47, 5.03, 0.063, 0.0164, 0.45, 0.031, 226, 0.555, 1.53, 0.120, 0.235, 17.48, 1.16, 0.389, 9.64, 0.269, 0.147, 0.523,
+                             0.097, 0.666, 4.12, 0.149, 0.440, 0.068, 0.440, 0.068]])
+    morb = np.array([[0.05, 4.05, 43.4, 0.491, 0.157, 6.44, 0.417, 1237, 4.87, 13.1, 0.657, 2.08, 138, 10.4, 3.37, 103, 2.62, 1.20, 4.42, 0.81, 5.28, 32.4,
+                     1.14, 3.30, 0.49, 3.17, 0.48]])
+    
+    to_calc = df.loc[0::,'Cs':'Lu']
+    
+    if source == "C1":
+        ree_norm = to_calc / C1
+    elif source == "Primitive Mantle":
+        ree_norm = to_calc / prim_mntl
+    elif source == "Eroded Earth":
+        ree_norm = to_calc / eroded_Earth
+    elif source == "MORB":
+        ree_norm = to_calc / morb
+    else:
+        print('Check Source Inputs')     
+    
+    df[['Cs_N','Rb_N','Ba_N','Th_N','U_N','Nb_N','Ta_N','K_N','La_N','Ce_N','Pb_N','Pr_N','Sr_N','Nd_N', 'Sm_N', 'Zr_N', 'Hf_N', 'Eu_N', 'Gd_N', 'Tb_N',
+       'Dy_N', 'Y_N', 'Ho_N', 'Er_N', 'Tm_N', 'Yb_N', 'Lu_N']] = ree_norm
+    
+    return df
 
 
 #%% General mineral recalculation.
